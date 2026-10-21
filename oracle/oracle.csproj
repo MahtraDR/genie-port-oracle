@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Headless console (net10.0 default, net8.0 selectable: GenieTfm, see Directory.Build.props) that wraps Genie4's real Eval + MathEval so we can
+       differential-test our Ruby engine against the actual C# evaluators. Tree-selectable:
+       Genie=remix (default, Genie4 Remix v4.2.4) | upstream (Genie4 4.5.0.3); see build.sh. Only the
+       WinForms-free pure-logic files are linked in; Globals + Utility.StringToDouble
+       are shimmed (Shims.cs) since Eval touches only VariableList.ContainsKey. -->
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>$(GenieTfm)</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AssemblyName>genieoracle</AssemblyName>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <!-- Genie4's decompiled source trips lots of benign warnings; don't fail on them. -->
+    <NoWarn>CS0168;CS0219;CS0164;CS0162;CS0618;CS0612;CS1998;CS0649;CS0169;CS0414;CS0472;SYSLIB0011</NoWarn>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <!-- Genie tree (Directory.Build.props): remix (default, the parity target) | upstream.
+       Override the source root with -p:GenieSrc=... -->
+  <PropertyGroup>
+    <GenieSrc Condition="'$(GenieSrc)' == '' And '$(Genie)' == 'remix'">$(GENIE_REMIX_SRC)</GenieSrc>
+    <GenieSrc Condition="'$(GenieSrc)' == '' And '$(Genie)' == 'upstream'">$(GENIE_UPSTREAM_SRC)</GenieSrc>
+    <DefineConstants Condition="'$(Genie)' == 'remix'">$(DefineConstants);GENIE_REMIX</DefineConstants>
+    <DefineConstants Condition="'$(Genie)' == 'upstream'">$(DefineConstants);GENIE_UPSTREAM</DefineConstants>
+  </PropertyGroup>
+
+  <Target Name="CheckGenieTree" BeforeTargets="PrepareForBuild">
+    <Error Condition="'$(Genie)' != 'remix' And '$(Genie)' != 'upstream'" Text="Genie must be remix|upstream (got '$(Genie)')" />
+    <Error Condition="'$(GenieTfm)' != 'net10.0' And '$(GenieTfm)' != 'net8.0'" Text="GenieTfm must be net10.0|net8.0 (got '$(GenieTfm)')" />
+    <Error Condition="'$(GenieSrc)' == '' Or !Exists('$(GenieSrc)/Script/Script.cs')" Text="No Genie source tree: set GENIE_REMIX_SRC (or GENIE_UPSTREAM_SRC for GENIE=upstream) to a Genie checkout, or pass -p:GenieSrc=DIR (got '$(GenieSrc)')" />
+  </Target>
+
+  <ItemGroup>
+    <Compile Include="$(GenieSrc)/Script/MathEval.cs" Link="genie/MathEval.cs" />
+    <Compile Include="$(GenieSrc)/Script/Eval.cs" Link="genie/Eval.cs" />
+    <Compile Include="$(GenieSrc)/Lists/ArrayList.cs" Link="genie/ArrayList.cs" />
+    <Compile Include="$(GenieSrc)/RegexOptions.cs" Link="genie/RegexOptions.cs" />
+    <Compile Remove="bin/**;obj/**" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,86 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- genieflow: headless, deterministic driver around Genie4's REAL script engine.
+       Genie4 sources are LINKED VERBATIM from $(GenieSrc) (never copied/edited).
+       Everything WinForms/GDI/plugin/FormMain-ish is shimmed in src/Shims*.cs.
+       See README.md for the exact real-vs-shim list. -->
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>$(GenieTfm)</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AssemblyName>genieflow</AssemblyName>
+    <RootNamespace>GenieClient</RootNamespace>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <LangVersion>latest</LangVersion>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <!-- Keep every tree/TFM build output out of the default items: otherwise the other tree's
+         bin/remix/Release/<tfm>/Jint.dll (Jint 4) becomes a {CandidateAssemblyFiles} match that
+         wins over the upstream HintPath (Jint 2.x) and the upstream build fails (JintEngine). -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);bin/**;obj/**</DefaultItemExcludes>
+    <NoWarn>CS0168;CS0219;CS0164;CS0162;CS0618;CS0612;CS1998;CS0649;CS0169;CS0414;CS0472;CS0067;CS0108;CS0114;CS0436;CS8981;SYSLIB0011;SYSLIB0014;SYSLIB0021;SYSLIB0023;SYSLIB0039;CA1416;CS4014</NoWarn>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <!-- Tree selection: $(Genie) comes from Directory.Build.props (default remix); so does
+       $(GenieTfm) (default net10.0, the runtime Remix ships on; net8.0 = legacy baseline). -->
+  <Target Name="CheckGenieTfm" BeforeTargets="PrepareForBuild">
+    <Error Condition="'$(GenieTfm)' != 'net10.0' And '$(GenieTfm)' != 'net8.0'" Text="GenieTfm must be net10.0|net8.0 (got '$(GenieTfm)')" />
+    <Error Condition="'$(GenieSrc)' == '' Or !Exists('$(GenieSrc)/Script/Script.cs')" Text="No Genie source tree: set GENIE_REMIX_SRC (or GENIE_UPSTREAM_SRC for GENIE=upstream) to a Genie checkout, or pass -p:GenieSrc=DIR (got '$(GenieSrc)')" />
+  </Target>
+  <PropertyGroup Condition="'$(Genie)' == 'remix'">
+    <GenieSrc Condition="'$(GenieSrc)' == ''">$(GENIE_REMIX_SRC)</GenieSrc>
+    <DefineConstants>$(DefineConstants);GENIE_REMIX</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Genie)' == 'upstream'">
+    <GenieSrc Condition="'$(GenieSrc)' == ''">$(GENIE_UPSTREAM_SRC)</GenieSrc>
+    <DefineConstants>$(DefineConstants);GENIE_UPSTREAM</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- ===== REAL Genie4 code (verbatim links) ===== -->
+    <Compile Include="$(GenieSrc)/Script/Script.cs" Link="genie/Script/Script.cs" />
+    <Compile Include="$(GenieSrc)/Script/Eval.cs" Link="genie/Script/Eval.cs" />
+    <Compile Include="$(GenieSrc)/Script/MathEval.cs" Link="genie/Script/MathEval.cs" />
+    <Compile Include="$(GenieSrc)/Script/Trace.cs" Link="genie/Script/Trace.cs" />
+    <Compile Include="$(GenieSrc)/Core/Command.cs" Link="genie/Core/Command.cs" />
+    <Compile Include="$(GenieSrc)/Core/Game.cs" Link="genie/Core/Game.cs" />
+    <Compile Include="$(GenieSrc)/Core/Connection.cs" Link="genie/Core/Connection.cs" />
+    <Compile Include="$(GenieSrc)/Core/GenieError.cs" Link="genie/Core/GenieError.cs" />
+    <Compile Include="$(GenieSrc)/Lists/*.cs" Link="genie/Lists/%(Filename).cs" />
+    <Compile Include="$(GenieSrc)/Utility/Utility.cs" Link="genie/Utility/Utility.cs" />
+    <Compile Include="$(GenieSrc)/Utility/Log.cs" Link="genie/Utility/Log.cs" />
+    <Compile Include="$(GenieSrc)/Utility/ColorCode.cs" Link="genie/Utility/ColorCode.cs" />
+    <Compile Include="$(GenieSrc)/Utility/INaturalComparer.cs" Link="genie/Utility/INaturalComparer.cs" />
+    <Compile Include="$(GenieSrc)/Utility/KeyCode.cs" Link="genie/Utility/KeyCode.cs" />
+    <Compile Include="$(GenieSrc)/Utility/Crypto.cs" Link="genie/Utility/Crypto.cs" />
+    <Compile Include="$(GenieSrc)/Utility/FileHandler.cs" Link="genie/Utility/FileHandler.cs" />
+    <Compile Include="$(GenieSrc)/RegexOptions.cs" Link="genie/RegexOptions.cs" />
+    <Compile Include="$(GenieSrc)/LocalDirectory.cs" Link="genie/LocalDirectory.cs" />
+    <Compile Include="$(GenieSrc)/Utility/Sound.cs" Link="genie/Utility/Sound.cs" />
+
+    <!-- ===== shims + driver ===== -->
+    <Compile Include="src/**/*.cs" />
+  </ItemGroup>
+
+  <!-- Remix-only verbatim links. Remix Command.cs (#lc/#lichsettings) calls LichLauncher. -->
+  <ItemGroup Condition="'$(Genie)' == 'remix'">
+    <Compile Include="$(GenieSrc)/Utility/LichLauncher.cs" Link="genie/Utility/LichLauncher.cs" />
+  </ItemGroup>
+
+  <!-- JavaScript engine. Upstream links Genie's own Libs/Jint.dll (Jint 2.x, JintEngine API).
+       Remix ships Jint 4.0.0 from NuGet (Genie4_Remix/Genie4.csproj: PackageReference Jint 4.0.0;
+       its Libs/Jint.dll is a leftover, byte-identical to upstream's, and unreferenced by Script.cs). -->
+  <ItemGroup Condition="'$(Genie)' == 'remix'">
+    <PackageReference Include="Jint" Version="4.0.0" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(Genie)' == 'upstream'">
+    <Reference Include="Jint"><HintPath>$(GenieSrc)/Libs/Jint.dll</HintPath></Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Antlr3.Runtime"><HintPath>$(GenieSrc)/Libs/Antlr3.Runtime.dll</HintPath></Reference>
+    <Reference Include="Interfaces"><HintPath>$(GenieSrc)/Libs/Interfaces.dll</HintPath></Reference>
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,9 @@
+EXPECT look
+IN Your red pouch is here.
+IN Your blue pouch is here.
+IN Back say "hi" now
+IN You see a foo, an bar and some baz.
+PROMPT
+WAIT 500
+IN Back a\
+PROMPT

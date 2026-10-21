@@ -1,0 +1,16 @@
+#!/bin/sh
+# Run the built genieflow: ./genieflow <script.cmd> [args] --trace t.trace [--json] ...
+# Tree selector:    GENIE=remix (default; Genie4 Remix v4.2.4) | GENIE=upstream (Genie4 4.5.0.3).
+# Runtime selector: GENIE_TFM=net10.0 (default; the runtime Remix ships on) | GENIE_TFM=net8.0
+#                   (legacy .NET 8 baseline). Build each with GENIE=<tree> GENIE_TFM=<tfm> ./build.sh.
+# dotnet: $DOTNET if set, else $DOTNET_ROOT/dotnet if present, else `dotnet` on PATH.
+export DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1
+if [ -z "$DOTNET" ]; then
+  if [ -n "$DOTNET_ROOT" ] && [ -x "$DOTNET_ROOT/dotnet" ]; then DOTNET=$DOTNET_ROOT/dotnet; else DOTNET=dotnet; fi
+fi
+G=${GENIE:-remix}
+T=${GENIE_TFM:-net10.0}
+case "$T" in net10.0|net8.0) ;; *) echo "genieflow: GENIE_TFM must be net10.0|net8.0 (got '$T')" >&2; exit 2;; esac
+DLL="$(dirname "$0")/bin/$G/Release/$T/genieflow.dll"
+[ -f "$DLL" ] || { echo "genieflow: no $G $T build at $DLL (run GENIE=$G GENIE_TFM=$T ./build.sh)" >&2; exit 2; }
+exec "$DOTNET" "$DLL" "$@"

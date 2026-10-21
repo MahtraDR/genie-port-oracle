@@ -1,0 +1,9 @@
+{"t":0,"ev":"setup","scriptdir":"<TESTS>/genie-only","genie":"Genie4 Remix v4.2.4","delivery":"row"}
+{"t":0,"ev":"input","text":".t32_js"}
+{"t":0,"ev":"script-start","script":"t32_js","args":""}
+{"t":0,"ev":"print","text":"[Script loaded: t32_js.cmd]","script":"t32_js"}
+{"t":0,"ev":"echo","text":"r=3","script":"t32_js"}
+{"t":0,"ev":"echo","text":"q=hello","script":"t32_js"}
+{"t":0,"ev":"print","text":"[Script finished (In 0.00 seconds): t32_js.cmd]","script":"t32_js"}
+{"t":0,"ev":"script-finish","script":"t32_js"}
+{"t":10,"ev":"end","live":0}

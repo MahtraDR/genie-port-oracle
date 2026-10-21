@@ -1,0 +1,18 @@
+<Project>
+  <!-- Source-tree and target-framework selectors for genieflow (see README.md "Selecting the Genie
+       tree" and "Selecting the .NET runtime").
+         dotnet build -p:Genie=remix      (default) -> Genie4 Remix v4.2.4  $GENIE_REMIX_SRC
+         dotnet build -p:Genie=upstream             -> Genie4 4.5.0.3       $GENIE_UPSTREAM_SRC
+         dotnet build -p:GenieTfm=net10.0 (default) -> .NET 10, the runtime Remix v4.2.4 ships on
+                                                       (Genie4_Remix/Genie4.csproj: net10.0-windows)
+         dotnet build -p:GenieTfm=net8.0            -> the legacy .NET 8 build (baseline only)
+       build.sh maps GENIE / GENIE_TFM onto these. Each tree+TFM gets its own obj/ dir and its own
+       bin/<tree>/Release/<tfm>/ so all four builds coexist.
+       BaseIntermediateOutputPath must be set before the SDK props are imported, hence this file. -->
+  <PropertyGroup>
+    <Genie Condition="'$(Genie)' == ''">remix</Genie>
+    <GenieTfm Condition="'$(GenieTfm)' == ''">net10.0</GenieTfm>
+    <BaseIntermediateOutputPath>$(MSBuildThisFileDirectory)obj/$(Genie)/$(GenieTfm)/</BaseIntermediateOutputPath>
+    <BaseOutputPath>$(MSBuildThisFileDirectory)bin/$(Genie)/</BaseOutputPath>
+  </PropertyGroup>
+</Project>

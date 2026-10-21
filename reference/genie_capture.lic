@@ -1,0 +1,108 @@
+# genie_capture.lic -- record a native-Genie session for the Genie->Lich replay fixture.
+#
+# Captures THREE interleaved, time-ordered record kinds so the replay harness
+# (now flow-oracle/capture2trace.rb + diff_driver.rb) can drive a tester's ACTUAL scripts
+# through the in-Lich engine and diff the commands OUR engine emits against the
+# commands native Genie emitted, command-for-command:
+#
+#   <epoch>\tIN\t<server_string.inspect>    game stream in  (server->client, WITH XML)
+#   <epoch>\tOUT\t<client_string.inspect>   command out     (what Genie sent upstream)
+#   <epoch>\tSNAP\t<json>                    reserved game-state snapshot (see below)
+#
+#   * <epoch> is a full Unix epoch float (Time.now.to_f) -- NOT just HH:MM:SS -- so the
+#     replay can drive $unixtime / @time@ / timed waits from real captured time.
+#   * IN/OUT payloads are String#inspect-encoded so one record == one line (embedded
+#     \r\n survive as escapes; the harness decodes them).
+#   * SNAP is a JSON dump of the reserved/live game-state vars the engine reads at
+#     runtime (LichGameState) -- captured from Lich's OWN live state, which under
+#     native-Genie-over-Lich is updated by the SAME stream. This is ground truth for
+#     the DR-derived state (DRRoom/DRSkill/dr_active_spells/hands/indicators/roomid)
+#     that is painful and noisy to reparse from raw XML. A SNAP is emitted on every
+#     game <prompt> (prompts bracket every combat round) plus one at startup.
+#
+# HAND THIS TO THE TESTER. Best run under NATIVE GENIE driving your scripts (Lich as
+# proxy) -- that is the ground-truth reference. If only the in-Lich engine can drive,
+# say so; the OUT-capture path differs and I'll send a variant.
+
+dir  = defined?(DATA_DIR) ? DATA_DIR : (defined?(LICH_DIR) ? LICH_DIR : Dir.home)
+path = File.join(dir, "genie-capture-#{Time.now.strftime('%Y%m%d-%H%M%S')}.log")
+log  = File.open(path, 'w')
+log.sync = true
+lock = Mutex.new
+
+DownstreamHook.remove('genie-capture')
+UpstreamHook.remove('genie-capture')
+
+# ---- reserved-var snapshot -------------------------------------------------
+# Dump the live game-state values the engine's LichGameState would resolve, so the
+# replay's ReplayGameState can serve exactly what Lich saw at this point in the stream.
+DR_SKILLS = %w[
+  Athletics Perception Stealth Locksmithing Thievery First\ Aid Outdoorsmanship Skinning
+  Scholarship Mechanical\ Lore Appraisal Forging Engineering Outfitting Alchemy Enchanting
+  Arcana Attunement Augmentation Debilitation Utility Warding Sorcery Theurgy
+  Summoning Conviction\ Lore Time\ Lore Life\ Magic Lunar\ Magic Holy\ Magic Arcane\ Magic
+  Small\ Edged Large\ Edged Twohanded\ Edged Small\ Blunt Large\ Blunt Twohanded\ Blunt
+  Slings Bow Crossbow Staves Polearms Light\ Thrown Heavy\ Thrown Brawling Offhand\ Weapon
+  Melee\ Mastery Missile\ Mastery Expertise Multiopponent\ Combat Parry\ Ability
+  Shield\ Usage Evasion Defending Conviction
+].freeze
+
+def genie_capture_snapshot
+  gs = Lich::Genie::LichGameState.new
+  names = (Lich::Genie::LichGameState::RESOLVERS.keys +
+           Lich::Genie::Reserved::INDICATOR_CHECKS.keys).uniq
+  vars = {}
+  names.each do |name|
+    val = gs[name]
+    vars[name] = val unless val.nil?
+  end
+  spells = (XMLData.respond_to?(:dr_active_spells) ? XMLData.dr_active_spells : nil) || {}
+  skills = {}
+  if defined?(Lich::DragonRealms::DRSkill)
+    DR_SKILLS.each do |skill|
+      ranks = Lich::DragonRealms::DRSkill.getrank(skill) rescue nil
+      next if ranks.nil? || ranks.to_i.zero?
+
+      skills[skill] = {
+        'ranks'        => ranks,
+        'learningrate' => (Lich::DragonRealms::DRSkill.getxp(skill) rescue 0),
+        'percent'      => (Lich::DragonRealms::DRSkill.getpercent(skill) rescue 0)
+      }
+    end
+  end
+  { 'vars' => vars, 'spells' => spells, 'skills' => skills }
+rescue StandardError => e
+  { 'error' => e.message.to_s[0, 200] }
+end
+
+require 'json' unless defined?(JSON)
+
+def genie_capture_snap(log, lock)
+  snap = genie_capture_snapshot
+  lock.synchronize { log.puts "#{Time.now.to_f}\tSNAP\t#{JSON.generate(snap)}" }
+end
+
+# ---- hooks -----------------------------------------------------------------
+DownstreamHook.add('genie-capture', proc { |server_string|
+  lock.synchronize { log.puts "#{Time.now.to_f}\tIN\t#{server_string.inspect}" }
+  # A game prompt brackets a combat round -> snapshot fresh state after it.
+  genie_capture_snap(log, lock) if server_string.include?('<prompt')
+  server_string
+})
+
+UpstreamHook.add('genie-capture', proc { |client_string|
+  lock.synchronize { log.puts "#{Time.now.to_f}\tOUT\t#{client_string.inspect}" }
+  client_string
+})
+
+before_dying {
+  DownstreamHook.remove('genie-capture')
+  UpstreamHook.remove('genie-capture')
+  log.close
+  respond '--- genie-capture: stopped.'
+}
+
+respond "--- genie-capture: recording to #{path}"
+respond '--- run your test session, then stop me with:  ,kill genie_capture  (your Lich command char)'
+genie_capture_snap(log, lock) # baseline snapshot before combat
+loop { sleep 30 }

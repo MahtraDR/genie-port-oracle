@@ -1,0 +1,8 @@
+{"t":0,"ev":"setup","scriptdir":"<TESTS>","genie":"Genie4 4.5.0.3","delivery":"sync"}
+{"t":0,"ev":"input","text":".t36_send_delay"}
+{"t":0,"ev":"script-start","script":"t36_send_delay","args":""}
+{"t":0,"ev":"print","text":"[Script loaded: t36_send_delay.cmd]","script":"t36_send_delay"}
+{"t":0,"ev":"queue","text":"look","delay":2,"script":"t36_send_delay"}
+{"t":0,"ev":"echo","text":"queued","script":"t36_send_delay"}
+{"t":2000,"ev":"send","text":"look","origin":"","user":false}
+{"t":2010,"ev":"end","live":1}

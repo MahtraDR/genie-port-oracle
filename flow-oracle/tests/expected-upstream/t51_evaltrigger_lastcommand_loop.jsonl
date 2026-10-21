@@ -1,0 +1,12 @@
+{"t":0,"ev":"setup","scriptdir":"<TESTS>","genie":"Genie4 4.5.0.3","delivery":"sync"}
+{"t":0,"ev":"input","text":".t51_evaltrigger_lastcommand_loop"}
+{"t":0,"ev":"script-start","script":"t51_evaltrigger_lastcommand_loop","args":""}
+{"t":0,"ev":"print","text":"[Script loaded: t51_evaltrigger_lastcommand_loop.cmd]","script":"t51_evaltrigger_lastcommand_loop"}
+{"t":10,"ev":"input","text":"#trigger {e/contains(\"$lastcommand\", \"ping\")/} {ping}"}
+{"t":100,"ev":"send","text":"ping","origin":"t51_evaltrigger_lastcommand_loop","user":false}
+{"t":100,"ev":"trigger-fire","pattern":"contains(\"$lastcommand\", \"ping\")","var":"lastcommand"}
+{"t":100,"ev":"send","text":"ping","origin":"Trigger","user":false}
+{"t":100,"ev":"echo","text":"after","script":"t51_evaltrigger_lastcommand_loop"}
+{"t":100,"ev":"print","text":"[Script finished (In 0.10 seconds): t51_evaltrigger_lastcommand_loop.cmd]","script":"t51_evaltrigger_lastcommand_loop"}
+{"t":100,"ev":"script-finish","script":"t51_evaltrigger_lastcommand_loop"}
+{"t":520,"ev":"end","live":0}

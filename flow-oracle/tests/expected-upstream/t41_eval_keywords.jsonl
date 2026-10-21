@@ -1,0 +1,19 @@
+{"t":0,"ev":"setup","scriptdir":"<TESTS>","genie":"Genie4 4.5.0.3","delivery":"sync"}
+{"t":0,"ev":"input","text":".t41_eval_keywords"}
+{"t":0,"ev":"script-start","script":"t41_eval_keywords","args":""}
+{"t":0,"ev":"print","text":"[Script loaded: t41_eval_keywords.cmd]","script":"t41_eval_keywords"}
+{"t":0,"ev":"echo","text":"upper-and-true","script":"t41_eval_keywords"}
+{"t":0,"ev":"echo","text":"lower-and-true","script":"t41_eval_keywords"}
+{"t":0,"ev":"echo","text":"upper-or-false","script":"t41_eval_keywords"}
+{"t":0,"ev":"echo","text":"c1-false","script":"t41_eval_keywords"}
+{"t":0,"ev":"echo","text":"c2-false","script":"t41_eval_keywords"}
+{"t":0,"ev":"echo","text":"c3-true","script":"t41_eval_keywords"}
+{"t":0,"ev":"echo","text":"c4-false","script":"t41_eval_keywords"}
+{"t":0,"ev":"echo","text":"c5-false","script":"t41_eval_keywords"}
+{"t":0,"ev":"echo","text":"c6-true","script":"t41_eval_keywords"}
+{"t":0,"ev":"echo","text":"c7-true","script":"t41_eval_keywords"}
+{"t":0,"ev":"echo","text":"c8-true","script":"t41_eval_keywords"}
+{"t":0,"ev":"echo","text":"not-false","script":"t41_eval_keywords"}
+{"t":0,"ev":"print","text":"[Script finished (In 0.00 seconds): t41_eval_keywords.cmd]","script":"t41_eval_keywords"}
+{"t":0,"ev":"script-finish","script":"t41_eval_keywords"}
+{"t":10,"ev":"end","live":0}

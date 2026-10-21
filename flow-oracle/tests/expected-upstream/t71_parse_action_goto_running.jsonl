@@ -1,0 +1,9 @@
+{"t":0,"ev":"setup","scriptdir":"<TESTS>","genie":"Genie4 4.5.0.3","delivery":"sync"}
+{"t":0,"ev":"input","text":".t71_parse_action_goto_running"}
+{"t":0,"ev":"script-start","script":"t71_parse_action_goto_running","args":""}
+{"t":0,"ev":"print","text":"[Script loaded: t71_parse_action_goto_running.cmd]","script":"t71_parse_action_goto_running"}
+{"t":0,"ev":"echo","text":"first-run-not-listed","script":"t71_parse_action_goto_running"}
+{"t":110,"ev":"echo","text":"jumped","script":"t71_parse_action_goto_running"}
+{"t":110,"ev":"print","text":"[Script finished (In 0.11 seconds): t71_parse_action_goto_running.cmd]","script":"t71_parse_action_goto_running"}
+{"t":110,"ev":"script-finish","script":"t71_parse_action_goto_running"}
+{"t":110,"ev":"end","live":0}

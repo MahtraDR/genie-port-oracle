@@ -1,0 +1,16 @@
+# Accepted / known divergences for the genieoracle fuzzers (reference/fuzz_*.rb).
+# Read by oracle_env.rb. A fuzzer exits 1 if any diff matches NO entry.
+# UMBRELLA entries (input regex `/./` or `/\A/`, OracleEnv::UMBRELLA_SOURCES) match every input,
+# so they cannot catch a regression in their bucket: corpus_oracle and the default-seed
+# fuzz_eval_grammar run are gated by EXACT accepted keys instead (reference/goldens/
+# *.accepted.<tree>.tsv, OracleEnv.finish); there the umbrellas only tag keys at --accept time.
+# Other runs that pass through an umbrella print a WARNING. curate_oracle_golden.rb ignores
+# umbrellas.
+# Columns (TAB-separated): fuzzer  tree  mode  /regex on the input/  /regex on Genie's output/ or *  finding  note
+#   fuzzer/tree/mode may be `*`. tree = remix | upstream. Keep entries narrow and tag
+#   each with the finding id whose work package will remove it; delete the entry when
+#   that WP lands (an entry with 0 hits across seeds is a candidate for removal).
+fuzz_regex_unicode	*	*	/[^\x00-\x7F]|\[\[:/	*	G54	regex dialect: .NET Unicode \w\d\s, no POSIX [[:x:]] (Regex.Match default options, Eval.cs:1172, 1199 R) vs Ruby ASCII classes + POSIX; todo.md P3 'leave as-is' contradicts strict parity -> needs a user decision
+# corpus_oracle (reference/goldens/corpus_oracle.<tree>.tsv): real corpus conditions/evals/regexes.
+corpus_oracle	*	regex	/\(\?<=|\[\\w-'\]|\[[^\]]*\\w[^\]]*-/	*	G54	.NET-only pattern NetRegex does not translate (variable-length lookbehind, class subtraction, ...; Script.cs:359-363, 507-511 R). The corpus capturing lookbehind and [\w-'] compile since WP2 v0.13.0 (0 harvested diffs, reference/harvest_regex.rb)
+# curated: specific buckets consulted FIRST by curate_oracle_golden.rb for the repo fixture (none left since WP8: the literal Eval.cs/MathEval.cs ports match every curated row).
